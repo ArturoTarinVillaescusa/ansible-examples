@@ -1,6 +1,6 @@
 # The global variable file for a Kafka cluster installation
 
-zookeeper_targz_file: http://apache.uvigo.es/zookeeper/stable/zookeeper-3.4.10.tar.gz
+zookeeper_targz_file: http://apache.rediris.es/zookeeper/stable/zookeeper-3.4.10.tar.gz
 
 zookeeper_app_dir: /opt/zookeeper
 

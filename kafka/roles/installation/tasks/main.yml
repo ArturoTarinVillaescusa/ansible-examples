@@ -2,18 +2,18 @@
 # This Playbook runs all the installation and configuration tasks in all the brokers
 
 - name: Install openjdk-8-jre-headless
-  apt: name={{ item }} update_cache=yes state=latest use_mirrors=no
+  apt: name={{ item }} update_cache=yes state=latest
   with_items:
     - openjdk-8-jre-headless
 
 - name: If exists, remove the {{ zookeeper_app_dir }} folder
   file:
-    path: {{ zookeeper_app_dir }}
+    path: "{{ zookeeper_app_dir }}"
     state: absent
 
 - name: Download and extract Zookeeper to the /opt folder
   unarchive:
-    src: {{ zookeeper_targz_file }}
+    src: "{{ zookeeper_targz_file }}"
     dest: /opt
     remote_src: yes
     copy: no
@@ -26,12 +26,12 @@
 
 - name: If exists, remove the {{ kafka_app_dir }} folder
   file:
-    path: {{ kafka_app_dir }}
+    path: "{{ kafka_app_dir }}"
     state: absent
 
 - name: Download and extract Kafka to the /opt folder
   unarchive:
-    src: {{ kafka_targz_file }}
+    src: "{{ kafka_targz_file }}"
     dest: /opt
     remote_src: yes
     copy: no
@@ -49,13 +49,13 @@
   command: cp {{ zookeeper_app_dir }}/conf/zoo_sample.cfg {{ zookeeper_app_dir }}/conf/zoo.cfg
 
 - replace:
-    dest: {{ zookeeper_app_dir }}/conf/zoo.cfg
+    dest: "{{ zookeeper_app_dir }}/conf/zoo.cfg"
     regexp: 'dataDir=/tmp/zookeeper'
     replace: 'dataDir=/opt/data/zookeeper'
     backup: no
 
 - replace:
-    dest: {{ kafka_app_dir }}/config/server.properties
+    dest: "{{ kafka_app_dir }}/config/server.properties"
     regexp: 'localhost:2181'
     replace: 'broker1:2181,broker2:2181,broker3:2181'
     backup: no
