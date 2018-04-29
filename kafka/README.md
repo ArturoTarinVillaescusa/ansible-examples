@@ -36,14 +36,6 @@ password: arturo
 
 ![Alt text](images/vmware2.png "vmware2")
 
-#### Install Ansible into this node:
------------------------------------------------------------------------
-
-```bash
-$ sudo apt get install ansible
-```
-
-
 #### Enable SSHing into this machine installing a DHCP server with this bash command:
 -------------------------------------------------------------------------------------
 
@@ -55,6 +47,13 @@ $ sudo apt-get install openssh-server
 Now we will be able to ssh into this machine from a machine in the same domain:
 
 ![Alt text](images/enablessh2.png "enablessh2")
+
+#### Install Ansible into this node:
+-----------------------------------------------------------------------
+
+```bash
+$ sudo apt-get install ansible
+```
 
 #### Clone the Ubuntu machine
 -----------------------------------------------------------------------
