@@ -1,0 +1,107 @@
+---
+# This Playbook runs all the installation and configuration tasks in all the brokers
+
+- name: Install openjdk-8-jre-headless
+  apt: name={{ item }} update_cache=yes state=latest use_mirrors=no
+  with_items:
+    - openjdk-8-jre-headless
+
+- name: If exists, remove the {{ zookeeper_app_dir }} folder
+  file:
+    path: {{ zookeeper_app_dir }}
+    state: absent
+
+- name: Download and extract Zookeeper to the /opt folder
+  unarchive:
+    src: {{ zookeeper_targz_file }}
+    dest: /opt
+    remote_src: yes
+    copy: no
+    owner: root
+    group: root
+    mode: u=rwX,g=rX,o=rX
+
+- name: Rename {{ zookeeper_app_dir }}-3.4.10 folder to {{ zookeeper_app_dir }}
+  command: mv {{ zookeeper_app_dir }}-3.4.10 {{ zookeeper_app_dir }}
+
+- name: If exists, remove the {{ kafka_app_dir }} folder
+  file:
+    path: {{ kafka_app_dir }}
+    state: absent
+
+- name: Download and extract Kafka to the /opt folder
+  unarchive:
+    src: {{ kafka_targz_file }}
+    dest: /opt
+    remote_src: yes
+    copy: no
+    owner: root
+    group: root
+    mode: u=rwX,g=rX,o=rX
+
+- name: Rename {{ kafka_app_dir }}_2.12-1.1.0 folder to {{ kafka_app_dir }}
+  command: mv {{ kafka_app_dir }}_2.12-1.1.0 {{ kafka_app_dir }}
+
+- name: Create the hosts file for all machines
+  template: src=hosts.j2 dest=/etc/hosts
+
+- name: Create the Zookeeper {{ zookeeper_app_dir }}/conf/zoo.cfg configuration file
+  command: cp {{ zookeeper_app_dir }}/conf/zoo_sample.cfg {{ zookeeper_app_dir }}/conf/zoo.cfg
+
+- replace:
+    dest: {{ zookeeper_app_dir }}/conf/zoo.cfg
+    regexp: 'dataDir=/tmp/zookeeper'
+    replace: 'dataDir=/opt/data/zookeeper'
+    backup: no
+
+- replace:
+    dest: {{ kafka_app_dir }}/config/server.properties
+    regexp: 'localhost:2181'
+    replace: 'broker1:2181,broker2:2181,broker3:2181'
+    backup: no
+
+- name: Create the /opt/data/zookeeper folder
+  file:
+    path: /opt/data/zookeeper
+    state: directory
+    owner: root
+    group: root
+    mode: 0775
+
+- name: Create the /etc/systemd/system/zoo.service
+  copy:
+    dest: "/etc/systemd/system/zoo.service"
+    content: |
+      [Unit]
+      Description=Zookeeper Daemon
+      Wants=syslog.target
+
+      [Service]
+      Type=forking
+      WorkingDirectory=/opt/zookeeper
+      User=root
+      ExecStart=/opt/zookeeper/bin/zkServer.sh start
+      TimeoutSec=30
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Create the /etc/systemd/system/kafka.service file
+  copy:
+    dest: "/etc/systemd/system/kafka.service"
+    content: |
+      [Unit]
+      Description=Kafka Daemon
+      Wants=syslog.target
+
+      [Service]
+      Type=forking
+      WorkingDirectory=/opt/kafka
+      User=root
+      ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+      TimeoutSec=30
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
