@@ -199,5 +199,5 @@ mensaje3
 arturo@broker3:/opt/kafka$ bin/kafka-console-consumer.sh --bootstrap-server broker1:9092,broker2:9092,broker3:9092 --topic test –from-beginning
 mensaje1
 mensaje2
-mensaje
+mensaje3
 ```
