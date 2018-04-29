@@ -22,8 +22,8 @@
     line: "server.3=0.0.0.0:2888:3888"
     insertafter: EOF
 
-- name: Create the {{ zookeeper_app_dir }}/myid file
+- name: Create the {{ zookeeper_data_dir }}/myid file
   copy:
-    dest: "/opt/data/zookeeper/myid"
+    dest: "{{ zookeeper_data_dir }}/myid"
     content: |
       3
