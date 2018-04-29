@@ -86,7 +86,7 @@ auto lo
 iface lo inet loopback
 auto ens33
 iface ens33 inet static
-address 192.168.0.113
+address 192.168.0.116
 netmask 255.255.255.0
 gateway 192.168.0.1
 dns-nameservers 8.8.8.8 192.168.0.1
@@ -98,7 +98,7 @@ auto lo
 iface lo inet loopback
 auto ens33
 iface ens33 inet static
-address 192.168.0.114
+address 192.168.0.117
 netmask 255.255.255.0
 gateway 192.168.0.1
 dns-nameservers 8.8.8.8 192.168.0.1
@@ -110,7 +110,7 @@ auto lo
 iface lo inet loopback
 auto ens33
 iface ens33 inet static
-address 192.168.0.115
+address 192.168.0.118
 netmask 255.255.255.0
 gateway 192.168.0.1
 dns-nameservers 8.8.8.8 192.168.0.1
@@ -124,23 +124,23 @@ Add their references into the /etc/hosts:
 arturo@broker1:~$ cat /etc/hosts
 127.0.0.1	localhost
 127.0.1.1	ubuntu
-192.168.0.113   broker1
-192.168.0.114   broker2
-192.168.0.115   broker3
+192.168.0.116   broker1
+192.168.0.117   broker2
+192.168.0.118   broker3
 
 arturo@broker2:~$ cat /etc/hosts
 127.0.0.1	localhost
 127.0.1.1	ubuntu
-192.168.0.113   broker1
-192.168.0.114   broker2
-192.168.0.115   broker3
+192.168.0.116   broker1
+192.168.0.117   broker2
+192.168.0.118   broker3
 
 arturo@broker3:~$ cat /etc/hosts
 127.0.0.1	localhost
 127.0.1.1	ubuntu
-192.168.0.113   broker1
-192.168.0.114   broker2
-192.168.0.115   broker3
+192.168.0.116   broker1
+192.168.0.117   broker2
+192.168.0.118   broker3
 
 ```
 
