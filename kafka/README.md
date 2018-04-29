@@ -48,7 +48,7 @@ $ sudo apt get install ansible
 -------------------------------------------------------------------------------------
 
 ```bash
-$ sudo apt-get install isc-dhcp-server
+$ sudo apt-get install openssh-server
 ```
 ![Alt text](images/enablessh1.png "enablessh1")
 
