@@ -1,10 +1,28 @@
-## Deploying a production-ready Kafka cluster with Ansible
-------------------------------------------------------------------------------
+# Deploying a production-ready Kafka cluster with Ansible
 
-- Requires Ansible 1.2
-- Expects Ubuntu 16.04 hosts
+# Table Of Contents
+1. [Document objective](#1-document-objective)
+2. [Hardware requirements](#2-hardware-requirements)
+3. [Software requirements](#3-software-requirements)
+4. [Kafka cluster architecture](#4-kafka-cluster-architecture)
+5. [Deploy the Kafka cluster in local VMWare Workstation machines](#5-deploy-the-kafka-cluster-in-local-vmware-workstation-machines)
 
-### Document objective
+5.1. [Enable SSHing into this machine installing a DHCP server](#5-1-enable-sshing-into-this-machine-installing-a-dhcp-server)
+
+5.2. [Install Ansible into this node](#5-2-install-ansible-into-this-node)
+
+5.3 [Clone the Ubuntu machine](#5-3-clone-the-ubuntu-machine)
+
+5.4 [Make their IPs static and add them to /etc/hosts](#5-4-make-their-ips-static-and-add-them-to-/etc/hosts)
+
+5.5 [Deployment Example](#5-5-deployment-example)
+
+5.6 [Verifying the Deployment](#5-6-verifying-the-deployment)
+
+6. [Testing fault tolerance](#6-testing-fault-tolerance)
+
+
+## 1 Document objective
 ---------------------------------------------
 
 The present document is a guide to build a three node Kafka cluster machine,
@@ -15,14 +33,36 @@ producing XML message workloads into a Kafka topic, and replicating these messag
 to a topic in a Google Cloud Kafka cluster.
 
 
-### Kafka cluster architecture
+## 2 Hardware requirements
+------------------------------------------------------------------------------
+
+Three VMWare virtual machines whith this settings per broker:
+
+    32GB of RAM
+    X GB HDD Disk, where
+
+    X = (message_size * messages_per_sec * seconds_messages_available * replication_factor) / num_brokers)
+
+Benchmarking Apache Kafka: 2 Million Writes Per Second (On Three Cheap Machines)
+https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines
+
+
+## 3 Software requirements
+------------------------------------------------------------------------------
+
+- Requires Ansible 1.2
+- Expects Ubuntu 16.04 hosts
+
+
+## 4 Kafka cluster architecture
 ------------------------------------
 
 Three node cluster with Zookeeper and Kafka clusters installed and configured:
 
 ![Alt text](images/architecture.png "Architecture")
 
-### Deploy the Kafka cluster in local VMWare Workstation machines
+
+## 5 Deploy the Kafka cluster in local VMWare Workstation machines
 -----------------------------------------------------------------------
 
 Create one Ubuntu virtual machine:
@@ -36,7 +76,8 @@ password: arturo
 
 ![Alt text](images/vmware2.png "vmware2")
 
-#### Enable SSHing into this machine installing a DHCP server with this bash command:
+
+### 5.1 Enable SSHing into this machine installing a DHCP server with this bash command:
 -------------------------------------------------------------------------------------
 
 ```bash
@@ -48,14 +89,16 @@ Now we will be able to ssh into this machine from a machine in the same domain:
 
 ![Alt text](images/enablessh2.png "enablessh2")
 
-#### Install Ansible into this node:
+
+### 5.2 Install Ansible into this node:
 -----------------------------------------------------------------------
 
 ```bash
 $ sudo apt-get install ansible
 ```
 
-#### Clone the Ubuntu machine
+
+### 5.3 Clone the Ubuntu machine
 -----------------------------------------------------------------------
 
 ![Alt text](images/vmware3.png "vmware3")
@@ -74,7 +117,8 @@ broker3
 
 ```
 
-#### Make their IPs static and add them to /etc/hosts
+
+### 5.4 Make their IPs static and add them to /etc/hosts
 -----------------------------------------------------------------------
 
 make their IPs static:
@@ -143,9 +187,10 @@ arturo@broker3:~$ cat /etc/hosts
 
 ```
 
-### Deployment Example
 
-The inventory file looks as follows:
+### 5.5 Deployment Example
+
+Our inventory may look as follows:
 
 ```bash
 [broker1]
@@ -156,14 +201,15 @@ The inventory file looks as follows:
 192.168.0.118 ansible_ssh_user=arturo
 ```
 
-Build the site with the following command:
+We can build the site with the following command:
 
 ```bash
 $ ansible-playbook kafka.yml --ask-sudo-pass -k --become --become-method=sudo
 ```
 
 
-#### Verifying the Deployment 
+
+### 5.6 Verifying the Deployment
 ---------------------------------------------
 
 Once configuration and deployment has completed we can check our local kafka cluster
@@ -200,3 +246,84 @@ mensaje1
 mensaje2
 mensaje3
 ```
+
+## 6 Testing fault tolerance
+---------------------------------------------
+
+We have deployed Monit in all the brokers to keep alive the Zookeeper and Kafka processes,
+so that they are automatically rebooted in a crash eventuality:
+
+```bash
+arturo@broker2:~$ cat /etc/monit/conf-available/kafka
+check process kafka matching "java -Xmx1G.*kafka"
+        start program = "/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties &"
+        stop program = "/opt/kafka/bin/kafka-server-stop.sh"
+        alert atarin.mistralbs@goldcar.com with reminder on 500 cycles
+
+arturo@broker2:~$ cat /etc/monit/conf-available/zoo
+check process zoo
+        matching "java -Dzookeeper.log.dir="
+        start program = "/opt/zookeeper/bin/zkServer.sh start"
+        stop program = "/opt/zookeeper/bin/zkServer.sh stop"
+        alert atarin.mistralbs@goldcar.com with reminder on 500 cycles
+
+arturo@broker2:~$ sudo monit -v
+[sudo] password for arturo:
+/etc/monit/monitrc:289: Include failed -- Success '/etc/monit/conf.d/*'
+/etc/monit/monitrc:290: Include failed -- Success '/etc/monit/conf-enabled/*'
+Runtime constants:
+ Control file       = /etc/monit/monitrc
+ Log file           = /var/log/monit.log
+ Pid file           = /run/monit.pid
+ Id file            = /var/lib/monit/id
+ State file         = /var/lib/monit/state
+ Debug              = True
+ Log                = True
+ Use syslog         = False
+ Is Daemon          = True
+ Use process engine = True
+ Limits             = {
+                    =   programOutput:     512 B
+                    =   sendExpectBuffer:  256 B
+                    =   fileContentBuffer: 512 B
+                    =   httpContentBuffer: 1024 kB
+                    =   networkTimeout:    5 s
+                    = }
+ Poll time          = 120 seconds with start delay 0 seconds
+ Event queue        = base directory /var/lib/monit/events with 100 slots
+ Mail from          = (not defined)
+ Mail subject       = (not defined)
+ Mail message       = (not defined)
+ Start monit httpd  = False
+
+The service list contains the following entries:
+
+System Name           = broker2
+ Monitoring mode      = active
+
+-------------------------------------------------------------------------------
+Monit daemon with PID 1364 awakened
+
+arturo@broker2:~$ cat /var/log/monit.log
+[PDT Apr 29 21:56:28] info     :  New Monit id: 0b142149ebc37e56dcd862fddff7b6a7
+ Stored in '/var/lib/monit/id'
+[PDT Apr 29 21:56:28] info     : Starting Monit 5.16 daemon
+[PDT Apr 29 21:56:28] info     : 'broker2' Monit 5.16 started
+
+```
+
+I.e., if we force a crash in the Zookeeper process in broker2, Monit will automatically spin-off a new process:
+
+```bash
+arturo@broker2:~$ ps -ef | grep "java -Dzookeeper.log.dir"
+root       1306      1  1 22:28 ?        00:00:06 java -Dzookeeper.log.dir=. -Dzookeeper.root.logger=INFO,CONSOLE
+
+
+arturo@broker2:~$ sudo kill -9 1306
+
+
+arturo@broker2:~$ ps -ef | grep "java -Dzookeeper.log.dir"
+root      23777      1 30 22:35 ?        00:00:02 java -Dzookeeper.log.dir=. -Dzookeeper.root.logger=INFO,CONSOLE
+
+```
+
